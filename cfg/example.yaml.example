@@ -1,0 +1,19 @@
+cam_infos:
+  - name: cam1
+    file: D:\projects\dataset\ConvenienceStoreMTMC\process\part0\cam1.mp4
+  - name: cam2
+    file: D:\projects\dataset\ConvenienceStoreMTMC\process\part0\cam2.mp4
+  - name: cam4
+    file: D:\projects\dataset\ConvenienceStoreMTMC\process\part0\cam4.mp4
+
+run_path: run\ConvenienceStoreMTMC\part0
+target_path: original
+max_frame_id: 19800
+
+# show_plot_video.py 設定
+save_video: False
+save_video_name: part7.mp4
+save_video_fps: 30
+save_video_size: [1920, 1080]
+save_bbox_img: False
+save_bbox_img_path: img

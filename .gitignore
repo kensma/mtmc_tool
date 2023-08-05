@@ -39,5 +39,5 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-cfg/*
+cfg/*.yaml
 run/*

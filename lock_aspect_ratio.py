@@ -1,4 +1,4 @@
-'''摳下辨識框內IMG, 並固定長寬比,填邊'''
+'''維持長寬比例，將圖片resize成128x384'''
 import numpy as np
 import cv2
 import os
