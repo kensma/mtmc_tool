@@ -1,7 +1,7 @@
 MTMC 工具
 ==
 
-## 1. 各檔案功能
+## 各檔案功能
 
 ###  `total.py`
 - 將不同part的資料合併成一個檔案
@@ -25,3 +25,6 @@ MTMC 工具
 
 ### `label_GUI/gui.py`
 - 多相機標註介面GUI介面
+
+## 致謝
+部分程式碼參考自[TrackEval](https://github.com/JonathonLuiten/TrackEval)
