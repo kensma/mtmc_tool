@@ -115,7 +115,7 @@ class PlotVideo:
                     return True, frame_id, 'local'
                 if match_id is not None and item[4] == match_id:
                     return True, frame_id, 'global'
-        return False, None
+        return False, None, None
 
 
 class PlotVideoMulti:
