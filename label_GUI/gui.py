@@ -97,6 +97,9 @@ class PreProcessingTab(QWidget):
         cfg_label = QLabel("設定檔案:")
         self.cfg_edit = QLineEdit()
 
+        cfg_dir_label = QLabel("儲存資料夾:")
+        self.cfg_dir_edit = QLineEdit("original")
+
         save_dir_label = QLabel("儲存資料夾:")
         self.save_dir_edit = QLineEdit("preProcessing")
 
@@ -118,6 +121,8 @@ class PreProcessingTab(QWidget):
         max_miss_dir_label = QLabel("補軌跡最大遺失幀數:")
         self.max_miss_dir_edit = QLineEdit("60")
 
+        self.unified_track_id_checkbox = QCheckBox("統一軌跡ID")
+
         self.button = QPushButton("確定")
 
         self.message_label = QLabel("")
@@ -127,11 +132,14 @@ class PreProcessingTab(QWidget):
         main_layout = QVBoxLayout()
         main_layout.addWidget(cfg_label)
         main_layout.addWidget(self.cfg_edit)
+        main_layout.addWidget(cfg_dir_label)
+        main_layout.addWidget(self.cfg_dir_edit)
         main_layout.addWidget(save_dir_label)
         main_layout.addWidget(self.save_dir_edit)
         main_layout.addLayout(step_layout)
         main_layout.addWidget(max_miss_dir_label)
         main_layout.addWidget(self.max_miss_dir_edit)
+        main_layout.addWidget(self.unified_track_id_checkbox)
         main_layout.addWidget(self.button)
         main_layout.addWidget(self.message_label)
         main_layout.addStretch(1)
@@ -153,12 +161,12 @@ class PreProcessingTab(QWidget):
 
         cam_infos = config['cam_infos']
         run_path = config['run_path']
-        prev_path = os.path.join(run_path, config['target_path'])
+        prev_path = os.path.join(run_path, self.cfg_dir_edit.text())
 
         # 整理軌跡輸出
         if self.collate_checkbox.isChecked():
             collate_save_path = os.path.join("cache", "collate")
-            collate(cam_infos, prev_path, collate_save_path)
+            collate(cam_infos, prev_path, collate_save_path, self.unified_track_id_checkbox.isChecked())
             prev_path = collate_save_path
 
         # 補中間斷掉的軌跡
@@ -244,14 +252,22 @@ class BeBugTab(QWidget):
         self.range_btn_group = QButtonGroup(self)
         range_full = QRadioButton("整段軌跡", self)
         range_from_frame = QRadioButton("從這幀", self)
+        range_from_frame_to_frame = QRadioButton("從這幀到", self)
+        self.to_frame = QLineEdit()
+        to_frame_layout = QHBoxLayout()
+        to_frame_layout.addWidget(range_from_frame_to_frame)
+        to_frame_layout.addWidget(self.to_frame)
+
         self.range_btn_group.addButton(range_full, 0)
         self.range_btn_group.addButton(range_from_frame, 1)
+        self.range_btn_group.addButton(range_from_frame_to_frame, 2)
         range_full.setChecked(True)
 
         range_layout = QVBoxLayout()
         range_layout.addWidget(range_label)
         range_layout.addWidget(range_full)
         range_layout.addWidget(range_from_frame)
+        range_layout.addLayout(to_frame_layout)
 
         id_label = QLabel("選擇變更id:")
         local_label = QLabel("local:\t")
@@ -470,20 +486,29 @@ class BeBugTab(QWidget):
     def changeControl(self, status):
         self.control_status = status
         self.group_control.setEnabled(status)
+        self.range_btn_group.button(0).setChecked(True)
 
     def confirmedBtnClicked(self):
-        from_frame = self.select_frame_id if self.range_btn_group.checkedId() == 1 else None
+        if self.range_btn_group.checkedId() == 0:
+            from_frame = None
+            to_frame = None
+        elif self.range_btn_group.checkedId() == 1:
+            from_frame = self.select_frame_id
+            to_frame = None
+        elif self.range_btn_group.checkedId() == 2:
+            from_frame = self.select_frame_id
+            to_frame = int(self.to_frame.text())
         local_id = int(self.id_local_edit.text()) if self.id_local_edit.text() != "" and int(self.id_local_edit.text()) != self.select_local_id else None
         global_id = int(self.id_global_edit.text()) if self.id_global_edit.text() != "" and int(self.id_global_edit.text()) != self.select_global_id else None
 
-        is_conflict, conflict_frame , conflict_id_type = self.th.plot_video.check_conflict(self.select_cam, self.select_local_id, local_id, global_id, from_frame)
+        is_conflict, conflict_frame , conflict_id_type = self.th.plot_video.check_conflict(self.select_cam, self.select_local_id, local_id, global_id, from_frame, to_frame)
 
         if is_conflict:
             self.conflict_box.setText(f'在第{conflict_frame}幀發現{conflict_id_type} id衝突')
             self.conflict_box.exec()
             return
 
-        self.th.plot_video.change_id(self.select_cam, self.select_local_id, local_id, global_id, from_frame)
+        self.th.plot_video.change_id(self.select_cam, self.select_local_id, local_id, global_id, from_frame, to_frame)
         self.cloneBtnClicked()
     
     def cloneBtnClicked(self):

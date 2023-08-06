@@ -86,10 +86,14 @@ class PlotVideo:
                 return int(track_id), int(match_id)
         return None, None
     
-    def change_id(self, old_track_id, track_id=None, match_id=None, from_frame=None):
+    def change_id(self, old_track_id, track_id=None, match_id=None, from_frame=None, to_frame=None):
+        print(f'from_frame: {from_frame}, to_frame: {to_frame}')
         for frame_id in sorted(list(self.frame_targets.keys())):
             if from_frame is not None and frame_id < from_frame:
                 continue
+            if to_frame is not None and frame_id > to_frame:
+                print("to_frame break")
+                break
             for i, item in enumerate(self.frame_targets[frame_id]):
                 if item[3] == old_track_id:
                     t_id = track_id if track_id is not None else item[3]
@@ -106,10 +110,12 @@ class PlotVideo:
                     xyxy, conf, cls, track_id, match_id, match_conf = target
                     csv_writer.writerow([frame_id, *xyxy, conf, cls, track_id, match_id, match_conf])
 
-    def check_conflict(self, old_track_id, track_id=None, match_id=None, from_frame=None):
+    def check_conflict(self, old_track_id, track_id=None, match_id=None, from_frame=None, to_frame=None):
         for frame_id in sorted(list(self.frame_targets.keys())):
             if from_frame is not None and frame_id < from_frame:
                 continue
+            if to_frame is not None and frame_id > to_frame:
+                break
             conflict_type = None
             have_old_track_id = False
             for i, item in enumerate(self.frame_targets[frame_id]):
@@ -213,11 +219,11 @@ class PlotVideoMulti:
 
         return cam_index - 1, cilck_bbox_id[0], cilck_bbox_id[1]
     
-    def change_id(self, cam_index, old_track_id, track_id=None, match_id=None, from_frame=None):
-        self.PlotVideos[cam_index].change_id(old_track_id, track_id, match_id, from_frame)
+    def change_id(self, cam_index, old_track_id, track_id=None, match_id=None, from_frame=None, to_frame=None):
+        self.PlotVideos[cam_index].change_id(old_track_id, track_id, match_id, from_frame, to_frame)
 
-    def check_conflict(self, cam_index, old_track_id, track_id=None, match_id=None, from_frame=None):
-        return self.PlotVideos[cam_index].check_conflict(old_track_id, track_id, match_id, from_frame)
+    def check_conflict(self, cam_index, old_track_id, track_id=None, match_id=None, from_frame=None, to_frame=None):
+        return self.PlotVideos[cam_index].check_conflict(old_track_id, track_id, match_id, from_frame, to_frame)
 
     def save_target(self, save_dir):
         save_path = os.path.join(self.run_path, save_dir)

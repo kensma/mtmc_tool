@@ -16,7 +16,8 @@ class SerialNumber:
     def reset(self):
         self.count = 0
 
-def collate(cam_infos, target_path, save_path="collate"):
+#unified_track_id 是指同一個local id 由最後match id 決定
+def collate(cam_infos, target_path, save_path="collate", unified_track_id=False):
 
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -46,11 +47,12 @@ def collate(cam_infos, target_path, save_path="collate"):
                             tracks[track_id] = match_id
                             match_ids.add(match_id)
                         else:
-                            match_id = max(match_ids) + 1
-                            while match_id in match_ids:
-                                    match_id += 1
-                            match_ids.add(match_id)
-                            tracks[track_id] = match_id
+                            if not unified_track_id:
+                                match_id = max(match_ids) + 1
+                                while match_id in match_ids:
+                                        match_id += 1
+                                match_ids.add(match_id)
+                                tracks[track_id] = match_id
                     if track_id in tracks and match_id != '' and tracks[track_id] != int(match_id):
                         tracks[track_id] = int(match_id)
 

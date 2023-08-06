@@ -27,7 +27,7 @@ cams = [cam_info['name'] for cam_info in cam_infos]
 
 gt_path = config['gt_path']
 # tracker_path = os.path.join(run_path, 'original')
-# tracker_folders = ['add-non-collate', 'add-t3-collate', 'add-t3-t5-collate', 'original-collate']
+# tracker_folders = ['add-non', 'add-t3', 'add-t3-t5', 'original']
 tracker_folders = ['original']
 
 for tracker_folder in tracker_folders:
