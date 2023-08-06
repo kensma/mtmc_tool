@@ -98,7 +98,22 @@ class PreProcessingTab(QWidget):
         self.cfg_edit = QLineEdit()
 
         save_dir_label = QLabel("儲存資料夾:")
-        self.save_dir_edit = QLineEdit("smooth")
+        self.save_dir_edit = QLineEdit("preProcessing")
+
+        step_label = QLabel("步驟選擇:")
+        self.collate_checkbox = QCheckBox("整理軌跡")
+        self.interpolation_checkbox = QCheckBox("補中間斷掉的軌跡")
+        self.smooth_checkbox = QCheckBox("平滑軌跡")
+
+        self.collate_checkbox.setChecked(True)
+        self.interpolation_checkbox.setChecked(False)
+        self.smooth_checkbox.setChecked(True)
+
+        step_layout = QHBoxLayout()
+        step_layout.addWidget(step_label)
+        step_layout.addWidget(self.collate_checkbox)
+        step_layout.addWidget(self.interpolation_checkbox)
+        step_layout.addWidget(self.smooth_checkbox)
 
         max_miss_dir_label = QLabel("補軌跡最大遺失幀數:")
         self.max_miss_dir_edit = QLineEdit("60")
@@ -114,6 +129,7 @@ class PreProcessingTab(QWidget):
         main_layout.addWidget(self.cfg_edit)
         main_layout.addWidget(save_dir_label)
         main_layout.addWidget(self.save_dir_edit)
+        main_layout.addLayout(step_layout)
         main_layout.addWidget(max_miss_dir_label)
         main_layout.addWidget(self.max_miss_dir_edit)
         main_layout.addWidget(self.button)
@@ -137,18 +153,27 @@ class PreProcessingTab(QWidget):
 
         cam_infos = config['cam_infos']
         run_path = config['run_path']
-        target_path = os.path.join(run_path, config['target_path'])
+        prev_path = os.path.join(run_path, config['target_path'])
 
         # 整理軌跡輸出
-        collate_save_path = os.path.join("cache", "collate")
-        collate(cam_infos, target_path, collate_save_path)
+        if self.collate_checkbox.isChecked():
+            collate_save_path = os.path.join("cache", "collate")
+            collate(cam_infos, prev_path, collate_save_path)
+            prev_path = collate_save_path
 
         # 補中間斷掉的軌跡
-        interpolation_save_path = os.path.join("cache", "interpolation")
-        interpolation(cam_infos, collate_save_path, interpolation_save_path, int(self.max_miss_dir_edit.text()))
+        if self.interpolation_checkbox.isChecked():
+            interpolation_save_path = os.path.join("cache", "interpolation")
+            interpolation(cam_infos, prev_path, interpolation_save_path, int(self.max_miss_dir_edit.text()))
+            prev_path = interpolation_save_path
 
         # 平滑軌跡
-        smooth(cam_infos, interpolation_save_path, os.path.join(run_path, self.save_dir_edit.text()))
+        if self.smooth_checkbox.isChecked():
+            smooth_save_path = os.path.join("cache", "smooth")
+            smooth(cam_infos, prev_path, smooth_save_path)
+            prev_path = smooth_save_path
+
+        shutil.copytree(prev_path, os.path.join(run_path, self.save_dir_edit.text()))
 
         if os.path.exists("cache"):
             shutil.rmtree("cache")
@@ -168,7 +193,8 @@ class BeBugTab(QWidget):
         self.is_select = False
         self.control_status = False
         self.select_cam = None
-        self.select_id = None
+        self.select_local_id = None
+        self.select_global_id = None
         self.select_frame_id = None
 
         #region 影像顯示區
@@ -189,7 +215,7 @@ class BeBugTab(QWidget):
         self.cfg_edit = QLineEdit()
 
         preProcess_dir_label = QLabel("前處理資料夾:")
-        self.preProcess_dir_edit = QLineEdit("smooth")
+        self.preProcess_dir_edit = QLineEdit("preProcessing")
 
         save_dir_label = QLabel("儲存資料夾:")
         self.save_dir_edit = QLineEdit(f"gt-{time.strftime('%Y%m%d%H%M%S')}")
@@ -338,6 +364,11 @@ class BeBugTab(QWidget):
         self.cover_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.cover_box.setDefaultButton(QMessageBox.No)
 
+        # 警告衝突
+        self.conflict_box = QMessageBox()
+        self.conflict_box.setWindowTitle("ID衝突")
+        self.conflict_box.setStandardButtons(QMessageBox.Ok)
+
     def start(self):
         print("Starting...")
         self.setFocus()
@@ -412,7 +443,8 @@ class BeBugTab(QWidget):
             self.id_global_edit.setText(str(global_id))
             self.is_select = True
             self.select_cam = cam
-            self.select_id = local_id
+            self.select_local_id = local_id
+            self.select_global_id = global_id
             self.select_frame_id = self.th.plot_video.frame_id - 1
             self.changeControl(False)
 
@@ -441,11 +473,17 @@ class BeBugTab(QWidget):
 
     def confirmedBtnClicked(self):
         from_frame = self.select_frame_id if self.range_btn_group.checkedId() == 1 else None
-        local_id = int(self.id_local_edit.text()) if self.id_local_edit.text() != "" else None
-        global_id = int(self.id_global_edit.text()) if self.id_global_edit.text() != "" else None
+        local_id = int(self.id_local_edit.text()) if self.id_local_edit.text() != "" and int(self.id_local_edit.text()) != self.select_local_id else None
+        global_id = int(self.id_global_edit.text()) if self.id_global_edit.text() != "" and int(self.id_global_edit.text()) != self.select_global_id else None
 
-        # print(self.select_cam, self.select_id, local_id, global_id, from_frame)
-        self.th.plot_video.change_id(self.select_cam, self.select_id, local_id, global_id, from_frame)
+        is_conflict, conflict_frame , conflict_id_type = self.th.plot_video.check_conflict(self.select_cam, local_id, global_id, from_frame)
+
+        if is_conflict:
+            self.conflict_box.setText(f'在第{conflict_frame}幀發現{conflict_id_type} id衝突')
+            self.conflict_box.exec()
+            return
+
+        self.th.plot_video.change_id(self.select_cam, self.select_local_id, local_id, global_id, from_frame)
         self.cloneBtnClicked()
     
     def cloneBtnClicked(self):
