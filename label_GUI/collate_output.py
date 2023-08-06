@@ -6,21 +6,26 @@ import yaml
 import os
 import sys
 
-# cfg_name = sys.argv[1] if len(sys.argv) > 1 else 'nd_v2_p1.yaml'
-# cfg_path = os.path.join('cfg', cfg_name)
-# config = yaml.load(open(cfg_path, 'r'), Loader=yaml.FullLoader)
-
-# cam_infos = config['cam_infos']
-# run_path = config['run_path']
-# tracker_folders = ['add-non', 'add-t3', 'add-t3-t5', 'original']
-
+class SerialNumber:
+    def __init__(self):
+        self.count = 0
+    def __call__(self):
+        count = self.count
+        self.count += 1
+        return count
+    def reset(self):
+        self.count = 0
 
 def collate(cam_infos, target_path, save_path="collate"):
 
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
+    serial_number = SerialNumber()
+    number = defaultdict(serial_number)
     match_ids = set()
+    multi_frame_targets = {}
+    max_frame = 0
     for cam_info in cam_infos:
         csv_file_name = f'{cam_info["name"]}_target.csv'
         target_csv_path = os.path.join(target_path, csv_file_name)
@@ -30,28 +35,42 @@ def collate(cam_infos, target_path, save_path="collate"):
                 spamreader = csv.reader(csvfile)
                 for row in reversed(list(spamreader)):
                     frame_id, *xyxy, conf, cls, track_id, match_id, match_conf = row
+                    max_frame = max(max_frame, int(frame_id))
                     if track_id not in tracks:
                         if match_id != '':
+                            match_id = int(match_id)
+                            if match_id in match_ids:
+                                match_id = max(match_ids) + 1
+                                while match_id in match_ids:
+                                    match_id += 1
                             tracks[track_id] = match_id
-                            match_ids.add(int(match_id))
+                            match_ids.add(match_id)
                         else:
                             match_id = max(match_ids) + 1
+                            while match_id in match_ids:
+                                    match_id += 1
                             match_ids.add(match_id)
-                            tracks[track_id] = str(match_id)
+                            tracks[track_id] = match_id
 
                     frame_targets[int(frame_id)].append((*xyxy, conf, cls, tracks[track_id], tracks[track_id]))
+                multi_frame_targets[cam_info["name"]] = frame_targets
 
-        # for k, v in tracks.items():
-        #     if v == '':
-        #         match_id = max(match_ids) + 1
-        #         match_ids.add(match_id)
-        #         tracks[k] = str(match_id)
+    csvs = {}
+    for cam_info in cam_infos:
+        csv_file_name = f'{cam_info["name"]}_target.csv'
+        csv_file = open(os.path.join(save_path, csv_file_name), 'a', newline='')
+        csv_writer = csv.writer(csv_file)
+        csvs[cam_info["name"]] = {'file': csv_file, 'writer': csv_writer}
 
-        with open(os.path.join(save_path, csv_file_name), 'a', newline='') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            for frame_id in sorted(list(frame_targets.keys())):
-                for target in frame_targets[frame_id]:
-                    csv_writer.writerow([frame_id, *target, ''])
+    for frame_id in range(max_frame):
+        for cam_info in cam_infos:
+            cam_name = cam_info["name"]
+            for target in multi_frame_targets[cam_name][frame_id]:
+                *xyxy, conf, cls, track_id, match_id = target
+                csvs[cam_name]['writer'].writerow([frame_id, *xyxy, conf, cls, str(number[track_id]), str(number[match_id]), ''])
+
+    for cam_info in cam_infos:
+        csvs[cam_info["name"]]['file'].close()
 
 if __name__ == '__main__':
     cfg_name = sys.argv[1] if len(sys.argv) > 1 else 'nd_v2_p1.yaml'

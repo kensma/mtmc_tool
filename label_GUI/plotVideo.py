@@ -106,15 +106,22 @@ class PlotVideo:
                     xyxy, conf, cls, track_id, match_id, match_conf = target
                     csv_writer.writerow([frame_id, *xyxy, conf, cls, track_id, match_id, match_conf])
 
-    def check_conflict(self, track_id=None, match_id=None, from_frame=None):
+    def check_conflict(self, old_track_id, track_id=None, match_id=None, from_frame=None):
         for frame_id in sorted(list(self.frame_targets.keys())):
             if from_frame is not None and frame_id < from_frame:
                 continue
+            conflict_type = None
+            have_old_track_id = False
             for i, item in enumerate(self.frame_targets[frame_id]):
                 if track_id is not None and item[3] == track_id:
-                    return True, frame_id, 'local'
+                    conflict_type = 'local'
                 if match_id is not None and item[4] == match_id:
-                    return True, frame_id, 'global'
+                    conflict_type = 'global'
+                if item[3] == old_track_id:
+                    have_old_track_id = True
+
+                if have_old_track_id and conflict_type is not None:
+                    return True, frame_id, conflict_type
         return False, None, None
 
 
@@ -209,8 +216,8 @@ class PlotVideoMulti:
     def change_id(self, cam_index, old_track_id, track_id=None, match_id=None, from_frame=None):
         self.PlotVideos[cam_index].change_id(old_track_id, track_id, match_id, from_frame)
 
-    def check_conflict(self, cam_index, track_id=None, match_id=None, from_frame=None):
-        return self.PlotVideos[cam_index].check_conflict(track_id, match_id, from_frame)
+    def check_conflict(self, cam_index, old_track_id, track_id=None, match_id=None, from_frame=None):
+        return self.PlotVideos[cam_index].check_conflict(old_track_id, track_id, match_id, from_frame)
 
     def save_target(self, save_dir):
         save_path = os.path.join(self.run_path, save_dir)

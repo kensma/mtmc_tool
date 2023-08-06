@@ -476,7 +476,7 @@ class BeBugTab(QWidget):
         local_id = int(self.id_local_edit.text()) if self.id_local_edit.text() != "" and int(self.id_local_edit.text()) != self.select_local_id else None
         global_id = int(self.id_global_edit.text()) if self.id_global_edit.text() != "" and int(self.id_global_edit.text()) != self.select_global_id else None
 
-        is_conflict, conflict_frame , conflict_id_type = self.th.plot_video.check_conflict(self.select_cam, local_id, global_id, from_frame)
+        is_conflict, conflict_frame , conflict_id_type = self.th.plot_video.check_conflict(self.select_cam, self.select_local_id, local_id, global_id, from_frame)
 
         if is_conflict:
             self.conflict_box.setText(f'在第{conflict_frame}幀發現{conflict_id_type} id衝突')
