@@ -51,6 +51,8 @@ def collate(cam_infos, target_path, save_path="collate"):
                                     match_id += 1
                             match_ids.add(match_id)
                             tracks[track_id] = match_id
+                    if track_id in tracks and match_id != '' and tracks[track_id] != int(match_id):
+                        tracks[track_id] = int(match_id)
 
                     frame_targets[int(frame_id)].append((*xyxy, conf, cls, tracks[track_id], tracks[track_id]))
                 multi_frame_targets[cam_info["name"]] = frame_targets
