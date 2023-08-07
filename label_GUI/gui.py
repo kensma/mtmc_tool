@@ -121,8 +121,6 @@ class PreProcessingTab(QWidget):
         max_miss_dir_label = QLabel("補軌跡最大遺失幀數:")
         self.max_miss_dir_edit = QLineEdit("60")
 
-        self.unified_track_id_checkbox = QCheckBox("統一軌跡ID")
-
         self.button = QPushButton("確定")
 
         self.message_label = QLabel("")
@@ -139,7 +137,6 @@ class PreProcessingTab(QWidget):
         main_layout.addLayout(step_layout)
         main_layout.addWidget(max_miss_dir_label)
         main_layout.addWidget(self.max_miss_dir_edit)
-        main_layout.addWidget(self.unified_track_id_checkbox)
         main_layout.addWidget(self.button)
         main_layout.addWidget(self.message_label)
         main_layout.addStretch(1)
@@ -166,7 +163,7 @@ class PreProcessingTab(QWidget):
         # 整理軌跡輸出
         if self.collate_checkbox.isChecked():
             collate_save_path = os.path.join("cache", "collate")
-            collate(cam_infos, prev_path, collate_save_path, self.unified_track_id_checkbox.isChecked())
+            collate(cam_infos, prev_path, collate_save_path)
             prev_path = collate_save_path
 
         # 補中間斷掉的軌跡

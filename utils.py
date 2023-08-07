@@ -65,7 +65,7 @@ def get_preprocessed_data(file_path, cams, num_timesteps, file_format='{}_target
             spamreader = csv.reader(f)
             for row in spamreader:
                 frame, *xyxy, conf, cls, track_id, match_id, match_conf = row
-                frame = int(frame)
+                frame = int(frame) - 1
                 xyxy = np.array([float(x) for x in xyxy])
                 match_id = int(match_id) if match_id != '' else -1
                 if match_id == -1:
