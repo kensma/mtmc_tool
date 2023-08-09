@@ -52,7 +52,7 @@ def collate(cam_infos, target_path, save_path="collate"):
                             match_ids.add(match_id)
                             tracks[track_id] = match_id
 
-                    frame_targets[int(frame_id)].append((*xyxy, conf, cls, tracks[track_id], tracks[track_id]))
+                    frame_targets[int(frame_id)].append((*xyxy, conf, cls, tracks[track_id], tracks[track_id], match_conf))
                 multi_frame_targets[cam_info["name"]] = frame_targets
 
     csvs = {}
@@ -66,8 +66,8 @@ def collate(cam_infos, target_path, save_path="collate"):
         for cam_info in cam_infos:
             cam_name = cam_info["name"]
             for target in multi_frame_targets[cam_name][frame_id]:
-                *xyxy, conf, cls, track_id, match_id = target
-                csvs[cam_name]['writer'].writerow([frame_id, *xyxy, conf, cls, str(number[track_id]), str(number[match_id]), ''])
+                *xyxy, conf, cls, track_id, match_id, match_conf = target
+                csvs[cam_name]['writer'].writerow([frame_id, *xyxy, conf, cls, str(number[track_id]), str(number[match_id]), match_conf])
 
     for cam_info in cam_infos:
         csvs[cam_info["name"]]['file'].close()

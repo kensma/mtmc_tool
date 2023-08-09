@@ -15,7 +15,7 @@ identity_mtmc = IdentityMTMC({
         'PRINT_CONFIG': False,  # Whether to print the config information on init. Default: False.
 })
 
-cfg_name = sys.argv[1] if len(sys.argv) > 1 else 'NkustMTMC_v2_p2.yaml'
+cfg_name = sys.argv[1] if len(sys.argv) > 1 else 'convenienceStoreMTMC_p1.yaml'
 cfg_path = os.path.join('cfg', cfg_name)
 config = yaml.load(open(cfg_path, 'r'), Loader=yaml.FullLoader)
 
@@ -27,8 +27,8 @@ cams = [cam_info['name'] for cam_info in cam_infos]
 
 gt_path = config['gt_path']
 # tracker_path = os.path.join(run_path, 'original')
-# tracker_folders = ['add-non', 'add-t3', 'add-t3-t5', 'original']
-tracker_folders = ['original']
+tracker_folders = ['add-non', 'add-t3', 'add-t3-t5', 'original']
+# tracker_folders = ['original']
 
 for tracker_folder in tracker_folders:
     tracker_path = os.path.join(run_path, tracker_folder)
@@ -87,7 +87,7 @@ for tracker_folder in tracker_folders:
     results['global'] = res
 
     '''输出'''
-    print('run_path: ', run_path)
+    print('tracker_path: ', tracker_path)
     with open(os.path.join(run_path, f'{tracker_folder}-eval.csv'), 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['area', 'IDF1', 'IDP', 'IDR', 'IDTP', 'IDFN', 'IDFP'])

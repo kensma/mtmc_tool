@@ -3,13 +3,13 @@ import os
 import re
 import csv
 
-part_list = ['part1', 'part2', 'part4', 'part5', 'part6', 'part7']
+part_list = ['part0', 'part1', 'part2']
 
-with open(os.path.join('run/NkustMTMC', 'total.csv'), 'w', newline='') as f:
+with open(os.path.join('run/ConvenienceStoreMTMC', 'total.csv'), 'w', newline='') as f:
     writer = csv.writer(f)
     writer.writerow(['part', 'cam', 'IDF1', 'IDP', 'IDR'])
     for part in part_list:
-        root_path = os.path.join('run/NkustMTMC', part)
+        root_path = os.path.join('run/ConvenienceStoreMTMC', part)
         cvs_files = ['original-eval.csv']
         for cvs_file in cvs_files:
             with open(os.path.join(root_path, cvs_file), 'r') as f:
